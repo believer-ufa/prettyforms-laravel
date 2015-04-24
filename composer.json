@@ -1,0 +1,23 @@
+{
+    "name": "believer-ufa/prettyforms-laravel",
+    "description":"Helps to make a simple and easy client-server validation for forms",
+    "homepage": "https://github.com/believer-ufa/prettyforms",
+    "keywords":["validation","forms"],
+    "license":"MIT",
+    "authors": [
+        {
+            "name": "Roman Akhmadullin",
+            "email": "freeman.aka.ahmed@gmail.com",
+            "role": "Developer"
+        }
+    ],
+    "require":{
+        "php": ">=5.4.0",
+        "illuminate/html": "5.*"
+    },
+    "autoload": {
+        "psr-4": {
+            "PrettyFormsLaravel": "src/classes"
+        }
+    }
+}
