@@ -19,7 +19,7 @@ echo Form::textarea($input_name, pf_get_value($name, $item, $values), $field['at
 ?>
 <br>
 <script>
-    $(window).load(function() {
+    <?=config('prettyforms.js-load-wrapper')?>(function() {
         <?php if (isset($field['ckeditor_function'])) { ?>
             <?=$field['ckeditor_function']?>('<?=$input_name?>');
         <?php } else { ?>

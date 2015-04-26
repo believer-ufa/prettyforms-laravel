@@ -122,7 +122,7 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
 	echo Form::select($input_name, $options, $selected, $field['attributes']); ?>
     
     <script>
-        $(window).load(function(){
+        <?=config('prettyforms.js-load-wrapper')?>(function(){
             $('select[name="<?=$input_name?>"]').select2({
                 ajax: {
                   url: "<?=$field['ajax_url']?>",

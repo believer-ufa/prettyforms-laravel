@@ -20,7 +20,7 @@ if (config('prettyforms.maskedinput-included') === false) { ?>
 <?php } ?>
 
 <script>
-    $(window).load(function() {
+    <?=config('prettyforms.js-load-wrapper')?>(function() {
         $('input[name="<?=$input_name?>"]').mask('<?=$field['mask']?>');
     });
 </script>

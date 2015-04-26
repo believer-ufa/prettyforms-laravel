@@ -21,7 +21,7 @@ $star = function($rate_step) use ($column_value) {
 </div>
 
 <script>
-    $(window).load(function() {
+    <?=config('prettyforms.js-load-wrapper')?>(function() {
         $('.block-rating-input .glyphicon').on('mouseenter',function() {
             var current_level = $(this).attr('data-level');
             var items = $(this).parent().find('.glyphicon');
