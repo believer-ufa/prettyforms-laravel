@@ -1,0 +1,35 @@
+<?php if (class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
+    <?= Breadcrumbs::render(Route::currentRouteName(), $item) ?>
+<?php endif; ?>
+
+<div id="save-form">
+    
+    <?php if (isset($strings[$mode]['caption'])) { ?>
+        <h3><?= $strings[$mode]['caption'] ?></h3>
+    <?php } ?>
+        
+    <fieldset>
+        <?php if (isset($strings[$mode]['legend'])) { ?>
+            <legend><?= $strings[$mode]['legend'] ?></legend>
+        <?php } ?>
+        <?php echo view('prettyforms::inputs-foundation', compact('item','fields', 'values'))->render() ?>
+    </fieldset>    
+
+    <br/>
+
+    <div class="senddata-token button success"
+         data-link="<?= Request::getUri() ?>"
+         id="btn-save"
+         data-input="#save-form">
+            <?= $mode === 'add' ? 'Создать' : 'Применить' ?>
+    </div>
+
+    <a class="button tiny"
+       href="<?= $home_link ?>"
+       id="btn-save"
+       data-input="#save-form">
+        Отмена
+    </a>
+
+    <div class="clear"></div>
+</div>
