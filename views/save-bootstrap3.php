@@ -1,30 +1,41 @@
-<?php if (config('prettyforms.show-breadcrumbs') AND class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
-    <?=Breadcrumbs::render(Route::currentRouteName(),$item)?>
-<?php endif; ?>
+<?php
+  $template = config('prettyforms.extend-template');
+  $section = config('prettyforms.section');
+?>
 
-<div id="save-form">
-    <div class="form-horizontal">
-		<?php if (isset($strings[$mode]['caption'])): ?>
-		  <h3><?=$strings[$mode]['caption']?></h3>
-		<?php endif; ?>
-        <?php echo view('prettyforms::inputs-bootstrap3', compact('item','fields', 'values'))->render() ?>
+<?php if ($template) { $__env->startSection($section); } ?>
+
+    <?php if (config('prettyforms.show-breadcrumbs') AND class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
+        <?=Breadcrumbs::render(Route::currentRouteName(),$item)?>
+    <?php endif; ?>
+
+    <div id="save-form">
+        <div class="form-horizontal">
+    		<?php if (isset($strings[$mode]['caption'])): ?>
+    		  <h3><?=$strings[$mode]['caption']?></h3>
+    		<?php endif; ?>
+            <?php echo view('prettyforms::inputs-bootstrap3', compact('item','fields', 'values'))->render() ?>
+        </div>
+
+        <br/>
+
+        <div class="senddata-token btn btn-primary"
+             data-link="<?=Request::getUri()?>"
+             id="btn-save"
+             data-input="#save-form">
+            <?= $mode === 'add' ? 'Создать' : 'Применить' ?>
+        </div>
+
+        <a class="btn btn-default"
+             href="<?=$home_link?>"
+             id="btn-save"
+             data-input="#save-form">
+            Отмена
+        </a>
+
+        <div class="clear"></div>
     </div>
 
-    <br/>
+<?php if ($template) { $__env->stopSection(); } ?>
 
-    <div class="senddata-token btn btn-primary"
-         data-link="<?=Request::getUri()?>"
-         id="btn-save"
-         data-input="#save-form">
-        <?= $mode === 'add' ? 'Создать' : 'Применить' ?>
-    </div>
-
-    <a class="btn btn-default"
-         href="<?=$home_link?>"
-         id="btn-save"
-         data-input="#save-form">
-        Отмена
-    </a>
-
-    <div class="clear"></div>
-</div>
+<?php if ($template) { echo $__env->make($template, array_except(get_defined_vars(), array('__data', '__path')))->render(); }

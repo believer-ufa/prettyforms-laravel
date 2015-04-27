@@ -1,35 +1,46 @@
-<?php if (config('prettyforms.show-breadcrumbs') AND class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
-    <?= Breadcrumbs::render(Route::currentRouteName(), $item) ?>
-<?php endif; ?>
+<?php
+  $template = config('prettyforms.extend-template');
+  $section = config('prettyforms.section');
+?>
 
-<div id="save-form">
+<?php if ($template) { $__env->startSection($section); } ?>
 
-    <?php if (isset($strings[$mode]['caption'])) { ?>
-        <h3><?= $strings[$mode]['caption'] ?></h3>
-    <?php } ?>
+    <?php if (config('prettyforms.show-breadcrumbs') AND class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
+        <?= Breadcrumbs::render(Route::currentRouteName(), $item) ?>
+    <?php endif; ?>
 
-    <fieldset>
-        <?php if (isset($strings[$mode]['legend'])) { ?>
-            <legend><?= $strings[$mode]['legend'] ?></legend>
+    <div id="save-form">
+
+        <?php if (isset($strings[$mode]['caption'])) { ?>
+            <h3><?= $strings[$mode]['caption'] ?></h3>
         <?php } ?>
-        <?php echo view('prettyforms::inputs-foundation', compact('item','fields', 'values'))->render() ?>
-    </fieldset>
 
-    <br/>
+        <fieldset>
+            <?php if (isset($strings[$mode]['legend'])) { ?>
+                <legend><?= $strings[$mode]['legend'] ?></legend>
+            <?php } ?>
+            <?php echo view('prettyforms::inputs-foundation', compact('item','fields', 'values'))->render() ?>
+        </fieldset>
 
-    <div class="senddata-token button success"
-         data-link="<?= Request::getUri() ?>"
-         id="btn-save"
-         data-input="#save-form">
-            <?= $mode === 'add' ? 'Создать' : 'Применить' ?>
+        <br/>
+
+        <div class="senddata-token button success"
+             data-link="<?= Request::getUri() ?>"
+             id="btn-save"
+             data-input="#save-form">
+                <?= $mode === 'add' ? 'Создать' : 'Применить' ?>
+        </div>
+
+        <a class="button tiny"
+           href="<?= $home_link ?>"
+           id="btn-save"
+           data-input="#save-form">
+            Отмена
+        </a>
+
+        <div class="clear"></div>
     </div>
 
-    <a class="button tiny"
-       href="<?= $home_link ?>"
-       id="btn-save"
-       data-input="#save-form">
-        Отмена
-    </a>
+<?php if ($template) { $__env->stopSection(); } ?>
 
-    <div class="clear"></div>
-</div>
+<?php if ($template) { echo $__env->make($template, array_except(get_defined_vars(), array('__data', '__path')))->render(); }
