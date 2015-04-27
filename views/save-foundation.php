@@ -1,19 +1,19 @@
-<?php if (class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
+<?php if (config('prettyforms.show-breadcrumbs') AND class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
     <?= Breadcrumbs::render(Route::currentRouteName(), $item) ?>
 <?php endif; ?>
 
 <div id="save-form">
-    
+
     <?php if (isset($strings[$mode]['caption'])) { ?>
         <h3><?= $strings[$mode]['caption'] ?></h3>
     <?php } ?>
-        
+
     <fieldset>
         <?php if (isset($strings[$mode]['legend'])) { ?>
             <legend><?= $strings[$mode]['legend'] ?></legend>
         <?php } ?>
         <?php echo view('prettyforms::inputs-foundation', compact('item','fields', 'values'))->render() ?>
-    </fieldset>    
+    </fieldset>
 
     <br/>
 

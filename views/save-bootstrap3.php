@@ -1,4 +1,4 @@
-<?php if(class_exists('Breadcrumbs') AND !empty(Route::currentRouteName())): ?>
+<?php if (config('prettyforms.show-breadcrumbs') AND class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
     <?=Breadcrumbs::render(Route::currentRouteName(),$item)?>
 <?php endif; ?>
 
