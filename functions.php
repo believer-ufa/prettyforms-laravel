@@ -73,7 +73,7 @@ function pf_validation_errors_answer($e) {
  * @return type
  */
 function pf_get_value($key, $item, $values) {
-    if (!empty($values[$key])) {
+    if (isset($values[$key])) {
         return $values[$key];
     } else {
         return $item->$key;
