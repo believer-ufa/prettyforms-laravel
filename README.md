@@ -144,7 +144,7 @@ class Users extends Controller {
     * Страницы создания и редактирования пользователя
     **/
     function anySave(Request $request) {
-        return $this->defaultSaveLogic();
+        return $this->defaultSaveLogic($request);
     }
     
     function postDelete() {
