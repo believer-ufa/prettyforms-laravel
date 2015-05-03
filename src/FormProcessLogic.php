@@ -83,7 +83,7 @@ trait FormProcessLogic {
         $columns = $this->getColumnsInfo($model);
 
         // Получим массив всех зависимостей многие-многие, чтобы потом добавлять в них элементы
-        $has_many_throughs = $this->getModelThroughs($model, $fields_names);
+        $has_many_throughs = $this->getModelThroughs($model, $fields_names, $columns);
 
         $throughs_array = array();
 
@@ -147,7 +147,7 @@ trait FormProcessLogic {
 
         // Заполним связи новыми данными
         foreach ($has_many_throughs as $relation_name) {
-            $this->$relation_name()->sync(
+            $model->$relation_name()->sync(
                 array_get($throughs_array,$relation_name,[])
             );
         }
@@ -160,21 +160,17 @@ trait FormProcessLogic {
     }
 
     /**
-     * Получить массив всех зависимостей многие-многие у модели
+     * Получить массив всех связей у модели
      */
-    private function getModelThroughs($model, $fields)
+    private function getModelThroughs($model, $fields, $columns)
     {
-        if (method_exists($model, 'getThroughsRelations')) {
-            $results_array = [];
-            foreach($model->getThroughsRelations() as $throughs_relation) {
-                if (in_array($throughs_relation,$fields)) {
-                    $results_array[] = $throughs_relation;
-                }
+        $results_array = [];
+        foreach($fields as $field) {
+            if (! isset($columns[$field])) {
+                $results_array[] = $field;
             }
-            return $results_array;
-        } else {
-            return [];
         }
+        return $results_array;
     }
 
     /**
@@ -243,9 +239,9 @@ trait FormProcessLogic {
             return $this->generateNotFoundErrorCommand();
         }
 
-        $home_link = $this->getHomeLink($model);
-
         $model->delete();
+
+        $home_link = $this->getHomeLink($model);
 
         if (in_array('Illuminate\Database\Eloquent\SoftDeletes',class_uses($model))) {
             Session::flash('message','success|Объект мягко удалён из системы, и его еще возможно легко восстановить.');

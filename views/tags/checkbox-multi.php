@@ -23,7 +23,7 @@ if (isset($field['options'])) {
     foreach($model->get() as $model_item) {
         $option = [
             'value' => $model_item->id,
-            'text'  => pf_get_item_value($model_item,array_get($field,'model_name')),
+            'text'  => pf_get_item_value($model_item,array_get($field,'display_as')),
         ];
 
         if (isset($field['model_desc'])) {

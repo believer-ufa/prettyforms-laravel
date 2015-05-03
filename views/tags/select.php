@@ -45,6 +45,8 @@ if (!isset($name)) {
     $name = $input_name;
 }
 
+$selected = null;
+
 if (isset($field['attributes']['class'])) {
     $field['attributes']['class'] .= ' form-control';
 } else {
@@ -79,7 +81,7 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
 
 if (in_array($field['tag'],['select-multi','search-multi'],true)) {
     $field['attributes']['multiple'] = '.';
-    if (isset($item) AND $item->exists AND empty($values[$name])) {
+    if ($item->exists AND empty($values[$name])) {
         $selected = array_pluck($item->$name()->get(), 'id');
     }
 } else {
@@ -114,7 +116,7 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
 	$options = [];
 
 	if ($selected) {
-		foreach($field['model']::whereIn('id',(array)$selected)->get() as $selected_item) {
+		foreach($field['model']::whereIn('id',(array) $selected )->get() as $selected_item) {
 			$options[$selected_item->id] = pf_get_item_value($selected_item,array_get($field,'display_as'));
 		}
 	}
@@ -132,7 +134,13 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
                     return { <?=$field['ajax_param_name']?>: params.term };
                   },
                   processResults: function (data) {
-                    return { results: <?=$field['ajax_process_function']?>(data) };
+                    return {
+                        <?php if (isset($field['ajax_process_function'])) { ?>
+                            results: <?=$field['ajax_process_function']?>(data)
+                        <?php } else { ?>
+                            results: data
+                        <?php } ?>
+                    };
                   },
                   cache: true
                 },

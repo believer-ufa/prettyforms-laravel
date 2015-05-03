@@ -36,5 +36,10 @@ return [
 
     // Автоматически отображать хлебные крошки над формой, если они были установлены для маршрута?
     'show-breadcrumbs' => true,
+    
+    // Шаблон для всплывающих сообщений после совершения каких-либо действий с системой
+    'messages-template' => '<div class="alert alert-%s alert-dismissible" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>%s</div>',
+    // Вариант шаблона сообщения для фреймворка Foundation:
+    //'messages-template' => '<div data-alert class="alert-box radius %s"> %s <a href="" class="close">×</a> </div>',
 
 ];

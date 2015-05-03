@@ -80,3 +80,23 @@ function pf_array_pluck_object($mass, $key, $label = null) {
 	return $newarray;
 }
 
+
+if (! function_exists('pf_display_messages')) {
+    /**
+     * Отобразить сообщения, заготовленные в сессии для пользователя
+     * @return string Строка с сообщениями
+     */
+    function pf_display_messages() {
+        if (Session::has('message')) {
+            list($type, $message) = explode('|', Session::get('message'));
+
+            if ($message === null) {
+                $message = $type;
+            }
+            $type = ($type === $message) ? 'info' : $type;
+
+            return sprintf( config('prettyforms.messages-template'), $type, $message);
+        }
+        return '';
+    }
+}
