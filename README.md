@@ -22,7 +22,7 @@ composer require "believer-ufa/prettyforms-laravel:~0.1"
 
 #### Подключите трейты к контроллерам и моделям
 
-Чтобы добавить функционал PrettyForms к вашему приложению, подключите к вашему главному контроллеру трейт "PrettyFormsLaravel\Http\FormProcessLogic". Таким образом, ваш главный контроллер должен выглядеть примерно так:
+Чтобы добавить функционал PrettyForms к вашему приложению, подключите к вашему главному контроллеру трейт "**PrettyFormsLaravel\Http\FormProcessLogic**". Таким образом, ваш главный контроллер должен выглядеть примерно так:
 ```php
 use PrettyFormsLaravel\Http\FormProcessLogic;
 
