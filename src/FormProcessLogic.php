@@ -1,14 +1,15 @@
 <?php
 
-namespace PrettyFormsLaravel\Http;
+namespace PrettyFormsLaravel;
 
 use Eloquent;
 use Exception;
 use Input;
-use PrettyFormsLaravel\Http\Commands;
 use Request;
+use Illuminate\Http\Request as LaravelRequest;
 use Session;
 use View;
+use DB;
 
 trait FormProcessLogic {
 
@@ -22,12 +23,10 @@ trait FormProcessLogic {
             'add' => [
 				//'caption' => 'Текст заголовка страницы создания объекта',
 				//'success' => 'Текст сообщения об успешном создании объекта',
-				//'legend' => 'Описание формы',
 			],
             'edit' => [
 				//'caption' => 'Текст заголовка страницы редактирования объекта'
 				//'success' => 'Текст сообщения об успешном редактировании объекта',
-                //'legend' => 'Описание формы',
 			],
         ];
     }
@@ -39,7 +38,7 @@ trait FormProcessLogic {
      * @param function $success_save_callback Функция, внутри которой с моделью можно проделать какие-то действия после её сохранения
      * @return boolean
      */
-    protected function save($id = null, $values = null, $success_save_callback = null)
+    protected function save(LaravelRequest $request, $id = null, $values = null, $success_save_callback = null)
     {
         $model_name = $this->_model_name;
         $model = $model_name::findOrNew($id); /* @var $model Eloquent */
@@ -52,12 +51,7 @@ trait FormProcessLogic {
         // которые перечислены среди полей редактирования модели
         $clean_values = array_only($values, $fields_names);
         
-        $controller_validation = null;
-        if (method_exists($this, 'getValidationRules')) {
-            $controller_validation = $this->getValidationRules($model);
-        }
-
-        $model->saveFormItem($fields_names, $clean_values, $controller_validation);
+        $this->saveModelItem($request, $model, $fields_names, $clean_values);
 
         // Если был передан коллбек, вызовем его
         if ($success_save_callback) {
@@ -65,6 +59,7 @@ trait FormProcessLogic {
         }
 
         $controller_strings = $this->getStrings($model);
+        
         Session::flash('message','success|' . array_get($controller_strings[$mode],'success',
             ($mode === 'add')
                 ? 'Объект успешно создан'
@@ -72,11 +67,169 @@ trait FormProcessLogic {
         );
 
         // Если всё прошло хорошо, генерируем ответ с командой редиректа на главную страницу текущего контроллера
-        return Commands::generate([
+        return [
             'redirect' => $this->getHomeLink($model),
-        ]);
+        ];
     }
 
+    /**
+     * Добавляет/изменяет строку в базе
+     * @param array $fields_names Список названий колонок, с которыми необходимо работать
+     * @param array $values Ассоциативный массив значений, которые надо будет сохранить
+     * @return bool
+     */
+    private function saveModelItem(LaravelRequest $request, $model, $fields_names, $values)
+    {
+        $columns = $this->getColumnsInfo($model);
+
+        // Получим массив всех зависимостей многие-многие, чтобы потом добавлять в них элементы
+        $has_many_throughs = $this->getModelThroughs($model, $fields_names);
+
+        $throughs_array = array();
+
+        // Обработаем все основные колонки
+        foreach ($values as $field => $value) {
+            if (in_array($field, $has_many_throughs)) {
+                if (!empty($value) AND $value !== 'null') {
+                    $throughs_array[$field] = (array)$value;
+                }
+            } else {
+                if ($columns[$field]['nullable']) {
+                    if (empty($value)) {
+                        $model->$field = null;
+                    } else {
+                        $model->$field = $value;
+                    }
+                } else {
+
+                    // Преобразуем значение в нужный тип данных
+                    switch ($columns[$field]['type']) {
+                        case 'integer':
+                            $value = (int) $value;
+                        break;
+                    }
+
+                    $model->$field = $value;
+                }
+            }
+        }
+
+        // Обработаем все булевые колонки
+        foreach ($columns as $column_name => $column_info) {
+            $is_boolean = ($column_info['type'] === 'boolean' OR $column_info['type'] === 'tinyint(1)');
+            if ($is_boolean AND in_array($column_name, $fields_names)) {
+                if (isset($values[$column_name]) AND $values[$column_name] === 'null') {
+                    $model->$column_name = null;
+                } elseif (isset($values[$column_name])) {
+                    $model->$column_name = true;
+                } else {
+                    $model->$column_name = false;
+                }
+            }
+        }
+
+        // Если есть связи "многие-ко-многим", запускаем транзакцию
+        if (!empty($has_many_throughs)) {
+            DB::beginTransaction();
+        }
+        
+        $validation_rules = null;
+        if (method_exists($this, 'getValidationRules')) {
+            $validation_rules = $this->getValidationRules($model);
+        }
+        
+        // Если были указаны правила валидации, проверим входящие данные
+        if ($validation_rules) {
+            $this->validate($request, $validation_rules);
+        }
+        
+        $model->save();
+
+        // Заполним связи новыми данными
+        foreach ($has_many_throughs as $relation_name) {
+            $this->$relation_name()->sync(
+                array_get($throughs_array,$relation_name,[])
+            );
+        }
+
+        if (!empty($has_many_throughs)) {
+            DB::commit();
+        }
+
+        return $model;
+    }
+
+    /**
+     * Получить массив всех зависимостей многие-многие у модели
+     */
+    private function getModelThroughs($model, $fields)
+    {
+        if (method_exists($model, 'getThroughsRelations')) {
+            $results_array = [];
+            foreach($model->getThroughsRelations() as $throughs_relation) {
+                if (in_array($throughs_relation,$fields)) {
+                    $results_array[] = $throughs_relation;
+                }
+            }
+            return $results_array;
+        } else {
+            return [];
+        }
+    }
+
+    /**
+     * Возвращает информацию о колонках текущей таблицы и их типах
+     * @return array
+     */
+    protected function getColumnsInfo($model) {
+        
+        $columns = array();
+        
+        switch (DB::connection()->getConfig('driver')) {
+            case 'pgsql':
+                $query = "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '".$model->getTable()."'";
+                foreach(DB::select($query) as $column)
+                {
+                    $columns[$column->column_name] = [
+                        'type'     => strtolower($column->data_type),
+                        'nullable' => ($column->is_nullable === 'YES')
+                    ];
+                }
+                
+                $columns = array_reverse($columns);
+                
+            break;
+
+            case 'mysql':
+                $query = 'SHOW COLUMNS FROM '.$model->getTable();
+                foreach(DB::select($query) as $column)
+                {
+                    $columns[$column->Field] = [
+                        'type'     => strtolower($column->Type),
+                        'nullable' => ($column->Null === 'YES')
+                    ];
+                }
+            break;
+        
+            case 'sqlite':
+                $query = 'PRAGMA table_info('.$model->getTable().')';
+                foreach(DB::select($query) as $column)
+                {
+                    $columns[$column->name] = [
+                        'type'     => strtolower($column->type),
+                        'nullable' => ($column->notnull == '0')
+                    ];
+                }
+            break;
+        
+            default:
+                $error = 'Database driver not supported: '.DB::connection()->getConfig('driver');
+                throw new Exception($error);
+        }
+
+        return $columns;
+    }    
+    
     /**
      * Удаление записи из таблицы
      * @param type $id
@@ -100,9 +253,9 @@ trait FormProcessLogic {
             Session::flash('message','success|Объект полностью удалён из системы.');
         }
 
-        return Commands::generate([
+        return [
             'redirect' => $home_link
-        ]);
+        ];
     }
 
     protected function restore($id)
@@ -117,9 +270,9 @@ trait FormProcessLogic {
 
 		Session::flash('message','success|Объект восстановлен');
 
-        return Commands::generate([
+        return [
             'refresh' => ''
-        ]);
+        ];
     }
 
     protected function forceDelete($id)
@@ -134,9 +287,9 @@ trait FormProcessLogic {
 
 		Session::flash('message','success|Объект полностью удалён из системы');
 
-        return Commands::generate([
+        return [
             'refresh' => ''
-        ]);
+        ];
     }
 
 
@@ -191,12 +344,13 @@ trait FormProcessLogic {
      * Стандартный метод для создания/редактирования записи
      * При обычном обращении генерирует форму, которая отправляет данные на тот же URL
      * Когда приходят данные, обрабатывает их.
-     * @param type $values
+     * @param Request $request Объект запроса
+     * @param array $values Значения, которые переопределят введённые
      */
-    protected function defaultSaveLogic($values = null)
+    protected function defaultSaveLogic(LaravelRequest $request, $values = null)
     {
         if (Request::wantsJson() AND Request::isMethod('post')) {
-            return $this->save(pf_param());
+            return $this->save($request, pf_param());
         } else {
             return $this->generateForm(pf_param(), $values);
         }
@@ -237,9 +391,9 @@ trait FormProcessLogic {
     }
 
     protected function generateNotFoundErrorCommand() {
-        return Commands::generate([
+        return [
             'error' => 'Указанный объект не найден в системе'
-        ]);
+        ];
     }
 
     /**

@@ -1,9 +1,5 @@
 <?php
 
-use Illuminate\Validation\Validator;
-use PrettyFormsLaravel\Validation\ValidatorException;
-use PrettyFormsLaravel\Http\Commands;
-
 /**
  * Возвращает содержимое указанного параметра из механизма роутинга
  * @param string $name Наименование параметра
@@ -31,40 +27,6 @@ function pf_controller() {
 }
 
 /**
- * Произвести валидацию
- * @param array $rules ассоциативный массив, где ключи - названия полей, а значения - это правила
- */
-function pf_validate_inputs($rules) {
-    $validator = Validator::make(Input::only(array_keys($rules)),$rules);
-    if ($validator->fails()) {
-        pf_validation_error($validator->errors()->getMessages());
-    }
-}
-
-/**
- * Выкинуть ошибку валидации
- * @param array $messages
- * @throws ValidatorException
- */
-function pf_validation_error($messages) {
-    if ($messages instanceof Validator) {
-        $messages = $messages->errors()->getMessages();
-    }
-    throw (new ValidatorException)->setValidationErrors($messages);
-}
-
-/**
- * Сгенерировать ответ с информацией об ошибках валидации для библиотеки PrettyForms
- * @param Exception $e
- * @return \Symfony\Component\HttpFoundation\Response
- */
-function pf_validation_errors_answer($e) {
-    return response()->json(Commands::generate([
-        'validation_errors' => Commands::generateValidationErrors($e->getValidationErrors())
-    ]));
-}
-
-/**
  * Функция сначала ищет значение в переданном массиве $values
  * Если не находит, возвращает текущее значение модели $item
  * @param string $key Название параметра
@@ -80,4 +42,41 @@ function pf_get_value($key, $item, $values) {
     }
 }
 
-include('functions_for_arrays.php');
+/**
+ * Специальная функция для получения значения из объекта на основе указанного объекта информации
+ */
+function pf_get_item_value($item,$key = NULL) {
+    // Если для значений был передан массив, обрабатываем его особым образом
+    // Если в значениях массива встретится массив, значит это функция..
+    // Если в значениях встретится простая строка, то передаем её как строку
+    if (is_array($key)) {
+        $item_value = '';
+        foreach ($key as $key_param) {
+            if (is_array($key_param)) {
+                $item_method = $key_param[0];
+                if (isset($key_param[1])) {
+                    $item_value .= $item->$item_method($key_param[1]);
+                } else {
+                    $item_value .= $item->$item_method();
+                }
+            } else {
+                $item_value .= $key_param;
+            }
+        }
+
+        return $item_value;
+    } elseif (empty($key)) {
+        return (string)$item;
+    } else {
+        return method_exists($item, $key) ? $item->$key() : $item->$key;
+    }
+}
+
+function pf_array_pluck_object($mass, $key, $label = null) {
+	$newarray = array();
+	foreach ($mass as $item) {
+		$newarray[pf_get_item_value($item, $key)] = pf_get_item_value($item, $label);
+	}
+	return $newarray;
+}
+
