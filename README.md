@@ -24,7 +24,7 @@ PrettyForms зависит от компонента `illuminate/html` и под
 ```php
 return [
   'providers' => [
-  	// ... ваши сервис-провайдеры
+  	    // ... ваши сервис-провайдеры
         'Illuminate\Html\HtmlServiceProvider',
         'PrettyFormsLaravel\ServiceProvider',
   ],
