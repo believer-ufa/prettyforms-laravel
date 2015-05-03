@@ -79,9 +79,9 @@ abstract class Controller extends BaseController {
 }
 ```
 
-#### Подключите JS библиотеку Prettyforms.js к вашему сайту и настройче jQuery Ajax
+#### Подключите JS библиотеку prettyforms.js и настройте jQuery Ajax
 
-Скачайте и подключите JS и CSS файлы библиотеки к своему сайту со страницы [Prettyforms.js](https://github.com/believer-ufa/prettyforms)
+Скачайте и подключите JS и CSS файлы библиотеки к своему сайту со страницы [prettyforms.js](https://github.com/believer-ufa/prettyforms)
 
 Добавьте в самый конец страницы следующий код:
 ```html
