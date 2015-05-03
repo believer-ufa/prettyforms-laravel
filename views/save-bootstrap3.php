@@ -19,7 +19,7 @@
 
         <br/>
 
-        <div class="senddata-token btn btn-primary"
+        <div class="senddata btn btn-primary"
              data-link="<?=Request::getUri()?>"
              id="btn-save"
              data-input="#save-form">

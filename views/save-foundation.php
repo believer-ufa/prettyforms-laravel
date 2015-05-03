@@ -24,7 +24,7 @@
 
         <br/>
 
-        <div class="senddata-token button success"
+        <div class="senddata button success"
              data-link="<?= Request::getUri() ?>"
              id="btn-save"
              data-input="#save-form">
