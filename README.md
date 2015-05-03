@@ -90,7 +90,7 @@ class Hobbie extends Model {
 ```
 
 #### Подключите JS библиотеку Prettyforms.js к вашему сайту
-Скачайте и подключите JS и CSS файл библиотеки к своему сайту со страницы [Prettyforms.js](https://github.com/believer-ufa/prettyforms)
+Скачайте и подключите JS и CSS файлы библиотеки к своему сайту со страницы [Prettyforms.js](https://github.com/believer-ufa/prettyforms)
 
 
 
