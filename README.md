@@ -19,7 +19,42 @@ PrettyForms for Laravel 5
 ```bash
 composer require "believer-ufa/prettyforms-laravel:~0.1"
 ```
+#### Добавьте необходимые сервис-провайдеры
+PrettyForms зависит от компонента `illuminate/html` и при установке подтягивает его за собой, поэтому вам необходимо подключить в вашему приложению также сервис-провайдер и фасады данного компонента. Чтобы сделать это, добавьте в ваш конфигурационнный файл `config/app.php` следующие строки:
+```php
+return [
+  // ... 
+	'providers' => [
+	      // ... список ваших провайдеров
+        'Illuminate\Html\HtmlServiceProvider',
+        'PrettyFormsLaravel\ServiceProvider',
+  ],
+  
+  'aliases' => [
+        // ... список ваших фасадов
+        'Form'        => 'Illuminate\Html\FormFacade',
+        'HTML'        => 'Illuminate\Html\HtmlFacade',
+  ],
+```
 
+#### Настройте Exception Handler
+Вам необходимо доработать ваш Exception Handler так, чтобы он научился корректно реагировать на новый тип ошибок: ошибок валидации сохранения Prettyforms-формы. Чтобы сделать это, добавьте в начало метода `render()` вашего класса `App\Exceptions\Handler` следующий код:
+```php
+// подключим новую зависимость к классу
+use PrettyFormsLaravel\Validation\ValidatorException;
+
+class Handler extends ExceptionHandler {
+    public function render($request, Exception $e)
+    {
+        if ($e instanceof ValidatorException)
+        {
+            return pf_validation_errors_answer($e);
+        }
+        
+        // остальной код данного метода...
+    }
+}
+```
 #### Подключите трейты к контроллерам и моделям
 
 Чтобы добавить функционал PrettyForms к вашему приложению, подключите к вашему главному контроллеру трейт `PrettyFormsLaravel\Http\FormProcessLogic`. Таким образом, ваш главный контроллер должен выглядеть примерно так:
@@ -51,24 +86,6 @@ class Hobbie extends Model {
     }
   
     // остальной код вашей модели
-}
-```
-
-Дополнительно вам необходимо доработать ваш Exception Handler так, чтобы он научился корректно реагировать на новый тип ошибок: ошибок валидации сохранения Prettyforms-формы. Чтобы сделать это, добавьте в начало метода `render()` вашего класса `App\Exceptions\Handler` следующий код:
-```php
-
-use PrettyFormsLaravel\Validation\ValidatorException;
-
-class Handler extends ExceptionHandler {
-    public function render($request, Exception $e)
-    {
-        if ($e instanceof ValidatorException)
-        {
-            return pf_validation_errors_answer($e);
-        }
-        
-        // остальной код данного метода...
-    }
 }
 ```
 
