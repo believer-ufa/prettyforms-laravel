@@ -22,7 +22,7 @@ composer require "believer-ufa/prettyforms-laravel:~0.1"
 
 #### Подключите трейты к контроллерам и моделям
 
-Чтобы добавить функционал PrettyForms к вашему приложению, подключите к вашему главному контроллеру трейт "**PrettyFormsLaravel\Http\FormProcessLogic**". Таким образом, ваш главный контроллер должен выглядеть примерно так:
+Чтобы добавить функционал PrettyForms к вашему приложению, подключите к вашему главному контроллеру трейт `PrettyFormsLaravel\Http\FormProcessLogic`. Таким образом, ваш главный контроллер должен выглядеть примерно так:
 ```php
 use PrettyFormsLaravel\Http\FormProcessLogic;
 
@@ -36,7 +36,7 @@ abstract class Controller extends BaseController {
 }
 ```
 
-Далее, подключите два дополнительных трейта к той модели, для работы с которой вы намереваетесь создавать форму, а также добавьте к ней свойства, описывающие в них параметры валидации и магический метод __toString(). Код вашей модели должен выглядеть примерно так:
+Далее, подключите два дополнительных трейта к той модели, для работы с которой вы намереваетесь создавать форму магический метод `__toString()`, который будет возвращать наименование для модели: оно будет использоваться при отображении форм. Код вашей модели должен выглядеть примерно так:
 ```php
 use PrettyFormsLaravel\FormSavesLogic;
 use PrettyFormsLaravel\Validation\ValidatorTrait;
@@ -44,13 +44,8 @@ use PrettyFormsLaravel\Validation\ValidatorTrait;
 class Hobbie extends Model {
 
     // подключаем нужные трейты
-	  use SoftDeletes, FormSavesLogic, ValidatorTrait;
+    use SoftDeletes, FormSavesLogic, ValidatorTrait;
 
-    // Правила валидации для модели
-    protected $validation_rules = [
-        'title' => 'required|max:255',
-    ];
-    
     function __toString() {
         return $this->title;
     }
@@ -59,4 +54,28 @@ class Hobbie extends Model {
 }
 ```
 
-Основная подготовительная работа завершена. Теперь нам необходимо создать контроллер, который будет содержать основную логику работы с моделью.
+Дополнительно вам необходимо доработать ваш Exception Handler так, чтобы он научился корректно реагировать на новый тип ошибок: ошибок валидации сохранения Prettyforms-формы. Чтобы сделать это, добавьте в начало метода `render()` вашего класса `App\Exceptions\Handler` следующий код:
+```php
+
+use PrettyFormsLaravel\Validation\ValidatorException;
+
+class Handler extends ExceptionHandler {
+    public function render($request, Exception $e)
+    {
+        if ($e instanceof ValidatorException)
+        {
+            return pf_validation_errors_answer($e);
+        }
+        
+        // остальной код данного метода...
+    }
+}
+```
+
+Теперь вся подготовительная работа по настройке завершена, и мы можем начать создавать нашу первую форму. Нам необходимо создать контроллер, который будет содержать всю основную логику работы с формой. Для примера, вы можем создать контроллер для редактирования наши хобби:
+
+```php
+
+// написать пример контроллера
+
+```
