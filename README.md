@@ -20,21 +20,21 @@ PrettyForms for Laravel 5
 composer require "believer-ufa/prettyforms-laravel:~0.1"
 ```
 #### Добавьте необходимые сервис-провайдеры
-PrettyForms зависит от компонента `illuminate/html` и при установке подтягивает его за собой, поэтому вам необходимо подключить в вашему приложению также сервис-провайдер и фасады данного компонента. Чтобы сделать это, добавьте в ваш конфигурационнный файл `config/app.php` следующие строки:
+PrettyForms зависит от компонента `illuminate/html` и подтягивает его за собой во время установки, поэтому вам необходимо подключить к вашему приложению также сервис-провайдер и фасады данного компонента. Чтобы сделать это, добавьте в ваш конфигурационнный файл `config/app.php` следующие строки:
 ```php
 return [
-  // ... 
-	'providers' => [
-	      // ... список ваших провайдеров
+  'providers' => [
+  	// ... ваши сервис-провайдеры
         'Illuminate\Html\HtmlServiceProvider',
         'PrettyFormsLaravel\ServiceProvider',
   ],
   
   'aliases' => [
-        // ... список ваших фасадов
+        // ... ваши фасады
         'Form'        => 'Illuminate\Html\FormFacade',
         'HTML'        => 'Illuminate\Html\HtmlFacade',
   ],
+];  
 ```
 
 #### Настройте Exception Handler
