@@ -13,9 +13,10 @@ trait FormSavesLogic {
      * Добавляет/изменяет строку в базе
      * @param array $fields_names Список названий колонок, с которыми необходимо работать
      * @param array $values Ассоциативный массив значений, которые надо будет сохранить
+     * @param array $validation_rules Правила валидации модели
      * @return bool
      */
-    public function saveFormItem($fields_names, $values)
+    public function saveFormItem($fields_names, $values, $validation_rules = null)
     {
         $columns = $this->getColumnsInfo();
 
@@ -75,7 +76,7 @@ trait FormSavesLogic {
             throw new \Exception('К вашей модели не подключён трейт валидации "PrettyFormsLaravel\Validation\ValidatorTrait". Пожалуйста, добавьте его в список подключенных трейтов.');
         }
 
-        $this->validateAndSave();
+        $this->validateAndSave([], $validation_rules);
 
         // Заполним связи новыми данными
         foreach ($has_many_throughs as $relation_name) {

@@ -36,7 +36,7 @@ trait FormProcessLogic {
      * Добавляет/изменяет запись в таблице. При желании, можно указать дополнительные значения в массиве $values, за основу же берутся данные из $_POST
      * @param int $id Номер записи в таблице
      * @param array $values Массив значений
-     * @param array $params Дополнительные параметры метода
+     * @param function $success_save_callback Функция, внутри которой с моделью можно проделать какие-то действия после её сохранения
      * @return boolean
      */
     protected function save($id = null, $values = null, $success_save_callback = null)
@@ -51,8 +51,13 @@ trait FormProcessLogic {
         // Получаем чистый массив значений, в котором содержатся только те значения,
         // которые перечислены среди полей редактирования модели
         $clean_values = array_only($values, $fields_names);
+        
+        $controller_validation = null;
+        if (method_exists($this, 'getValidationRules')) {
+            $controller_validation = $this->getValidationRules($model);
+        }
 
-        $model->saveFormItem($fields_names, $clean_values);
+        $model->saveFormItem($fields_names, $clean_values, $controller_validation);
 
         // Если был передан коллбек, вызовем его
         if ($success_save_callback) {
