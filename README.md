@@ -1,6 +1,8 @@
 PrettyForms for Laravel 5
 ===========
 
+Русская документация расположена [ниже в данном документе](https://github.com/believer-ufa/prettyforms-laravel/blob/master/README.md#prettyforms-%D0%B4%D0%BB%D1%8F-laravel-5).
+
 The component that makes it easy to create and handle a variety of forms for your website.
 
 ## Introduction
