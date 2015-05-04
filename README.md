@@ -32,42 +32,42 @@ At this point in the component to implement the following:
 	<li>All necessary for non-standard components INPUT JS-default loaded via CDN, but it can be easily disabled via konfiguratsionnny component file</li>
 </ul>
 
-### Пример приложения
+### Application sample
 
-Вы можете скачать и изучить пример реального работающего приложения по следующей ссылке:
+You can download and explore the real working example of the application on the following link:
 https://github.com/believer-ufa/prettyforms-laravel5-app
 
-Практически все фичи, описанные выше, присутствуют в рабочем виде в приложении-примере: валидация, редактирование связей "многие-ко-многим", аяксовый поиск, мягкое удаление и восстановление, загрузка редактора и прочих JS-компонетов по CDN, хлебные крошки, и так далее.
+Almost all the features described above are present in the sample application: validation, editing relations "many-to-many" ajax search, seft delete and recovery, loading the editor and other JS files from CDN, breadcrumbs, and etc.
 
-Данный пример рабочего приложения можно также использовать как основу для своего собственного приложения: просто установите его себе и начните работу над новым проектом на основе того, что содержится в примерах.
+This example of a working application can also be used as a basis for your own applications: just install it yourself and start a new project on the basis of what is contained in the examples.
 
-### Установка
+### Installing
 
-Прежде всего, установите компонент, выполнив в терминале следующую команду:
+First, install the component by running the following command in the terminal:
 ```bash
 composer require "believer-ufa/prettyforms-laravel:~0.2"
 ```
-#### Добавьте необходимые сервис-провайдеры
-PrettyForms зависит от компонента `illuminate/html` и подтягивает его за собой во время установки, поэтому вам необходимо подключить к вашему приложению также сервис-провайдер и фасады данного компонента. Чтобы сделать это, добавьте в ваш конфигурационнный файл `config/app.php` следующие строки:
+#### Add the required service providers
+PrettyForms are depends from `illuminate/html` and pulls him along during installation, so you need to connect to your application as a service provider, and the facades of the component. To do this, add in your config file `config/app.php` following lines:
 ```php
 return [
   'providers' => [
-  	    // ... ваши сервис-провайдеры
+  	    // ... your service providers
         'Illuminate\Html\HtmlServiceProvider',
         'PrettyFormsLaravel\ServiceProvider',
   ],
   
   'aliases' => [
-        // ... ваши фасады
+        // ... your facades
         'Form'        => 'Illuminate\Html\FormFacade',
         'HTML'        => 'Illuminate\Html\HtmlFacade',
   ],
 ];  
 ```
 
-#### Подключите трейт к контроллеру
+#### Connect trait controller
 
-Подключите к вашему главному контроллеру трейт `PrettyFormsLaravel\FormProcessLogic`. Таким образом, ваш главный контроллер должен выглядеть примерно так:
+Connect to your host controller trait `PrettyFormsLaravel\FormProcessLogic`. Thus, your main controller should look like this:
 ```php
 use PrettyFormsLaravel\FormProcessLogic;
 
@@ -77,26 +77,27 @@ abstract class Controller extends BaseController {
       ValidatesRequests,
       FormProcessLogic;
 
-   // код вашего родительского контроллера
+   // code for your parent controller
 }
 ```
 
-#### Подключите JS библиотеку prettyforms.js и настройте jQuery Ajax
+#### Connect prettyforms.js library and configure jQuery Ajax
 
-Скачайте и подключите JS и CSS файлы библиотеки к своему сайту со страницы [prettyforms.js](https://github.com/believer-ufa/prettyforms)
+Download and connect the JS and CSS library files to your site from the page [prettyforms.js](https://github.com/believer-ufa/prettyforms)
 
-Добавьте в самый конец страницы следующий код:
+Add to the end of the page the following code:
 ```html
 
-<!-- данные скрипт и стиль опциональны к подключению: они обеспечивают красивые всплывающие диалоги -->
+<!-- This script and style is optional: they provide a nice pop-up dialogs -->
 <link href="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/0.5.0/sweet-alert.css" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/sweetalert/0.5.0/sweet-alert.min.js"></script>
 
 <link href="{{ asset('/path/to/prettyforms/prettyforms.css') }}" rel="stylesheet">
 <script src="{{ asset('/path/to/prettyforms/prettyforms.js') }}"></script>
+<script src="{{ asset('/path/to/prettyforms/prettyforms_en.js') }}"></script>
     
 <script>
-// Настройка аякса: добавляем защитный токен ко всем ajax-запросам приложения
+// Configuring ajax: adding a protective token to all ajax-application requests
 $.ajaxSetup({
   headers: {
     'X-CSRF-TOKEN': '<?= csrf_token() ?>'
