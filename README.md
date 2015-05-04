@@ -5,7 +5,7 @@ The component that makes it easy to create and handle a variety of forms for you
 
 ## Introduction
 
-We all know about the amount of routine work that needs to be prodelyvat every time when we need to create and edit a particular form on the page. This may be the profile edit page, set a new password for the user, similar forms in admin, or just some kind of new application in a support.
+We all know about the amount of routine work that needs to be do every time when we need to create and edit a particular form on the page. This may be the profile edit page, set a new password for the user, similar forms in admin, or just some kind of new application in a support.
 
 All of these forms are united by common characteristics: they are quite simple and very similar to each other in terms of implementation: to create a method in the controller, to create view-template, organize the validation, shove the data into some kind of model.. Pain, trivial round, boredom. How many times it should be done on a large project? In the initial stages of the problem is often "solved" scaffolding, but this is only a small billet, which was subsequently still need to change and modify. That's why I wrote this library, greatly reduced the amount of resources required to create and maintain such simple forms.
 
