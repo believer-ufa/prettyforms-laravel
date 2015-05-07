@@ -135,7 +135,7 @@ class Users extends Controller {
     protected $fields = [
         'name'     => [
             'tag'        => 'input',
-            'label'      => 'Имя',
+            'label'      => 'Name',
             'attributes' => ['data-validation' => 'notempty'],
         ],
         'email'    => [
@@ -145,7 +145,7 @@ class Users extends Controller {
         ],
         'password'    => [
             'tag'        => 'input',
-            'label'      => 'Пароль',
+            'label'      => 'Password',
             'attributes' => ['data-validation' => 'notempty'],
         ],
     ];
