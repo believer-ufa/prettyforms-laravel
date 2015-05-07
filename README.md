@@ -106,11 +106,9 @@ $.ajaxSetup({
 </script>
 ```
 
-#### 
+#### Create a controller for form
 
-#### Создайте контроллер формы
-
-Теперь вся подготовительная работа по настройке завершена, и мы можем начать создавать нашу первую форму. Нам необходимо создать контроллер, который будет содержать всю основную логику работы с формой. Для примера, вы можем создать контроллер для редактирования наших пользователей системы:
+Now, all the preparatory work for setting up is complete and we can start creating our first form. We need to create a controller that will contain all the basic logic of a form. For example, you can create a controller for editing users:
 
 ```php
 
@@ -127,12 +125,12 @@ class Users extends Controller {
   	}
 
     /**
-     * Название модели, которую мы собираемся менять
+     * The name of the model that we are going to change
      */
     protected $_model_name = 'App\User';
     
     /**
-     * Поля формы, которые будут доступны для редактирования
+     * Form fields that will be available for editing
      */
     protected $fields = [
         'name'     => [
@@ -153,25 +151,25 @@ class Users extends Controller {
     ];
 
     /**
-     * Возвращает тексты, которые будут использоваться в генерации форм и сообщениях для объекта.
-     * Метод не обязательно создавать, по умолчанию класс будет использовать стандартные общие сообщения и заголовки
+     * It returns the text to be used in the generation of forms and reports for the object.
+     * The method does not necessarily to create, a default class will use the standard common messages and headers
      */
     protected function getStrings($model) {
         return [
             'add'  => [
-                'caption' => 'Новый пользователь',
-                'success' => 'Пользователь успешно создан',
+                'caption' => 'New user',
+                'success' => 'User created successfully',
             ],
             'edit' => [
-                'caption' => 'Редактирование пользователя',
-                'success' => 'Пользователь успешно обновлён',
+                'caption' => 'Edit user',
+                'success' => 'User updated successfully',
             ],
         ];
     }
     
     /**
-     * Правила валидации для текущей модели
-     * @param object $model Модель, с которой мы работаем
+     * Validation rules for the current model
+     * @param object $model The model, with which we work
      * @return array
      */
     protected function getValidationRules($model) {
@@ -183,17 +181,17 @@ class Users extends Controller {
     }
 
     /**
-    * Отобразить страницу со список пользователей
+    * See page with a list of users
     **/
     public function getIndex()
-  	{
-          $view = view('users');
-          $view->users = User::withTrashed()->get();
-  		    return $view;
-  	}
+    {
+        $view = view('users');
+        $view->users = User::withTrashed()->get();
+        return $view;
+    }
 
     /**
-    * Страницы создания и редактирования пользователя
+    * Page for creating and editing users
     **/
     function anySave(Request $request) {
         return $this->defaultSaveLogic($request);
@@ -213,15 +211,15 @@ class Users extends Controller {
 }
 ```
 
-Далее, нам, конечно же, придётся создать view-файл, на котором будут отображен список пользователей и кнопки для их создания и редактирования. Вот простой пример подобного шаблона:
+Next, we of course have to create view-file, which will display a list of users and a buttons for their creation and editing. Here is a simple example of this template:
 ```html
 @extends('app')
 
 @section('content')
     <div class="panel panel-default">
         <div class="panel-heading">
-            Пользователи
-            <a class="btn btn-primary btn-xs" href="/users/save">новый</a>
+            Users
+            <a class="btn btn-primary btn-xs" href="/users/save">new</a>
         </div>
 
         <div class="panel-body">
@@ -229,9 +227,9 @@ class Users extends Controller {
             <table class="table">
                 <thead>
                     <tr>
-                        <th>Имя</th>
+                        <th>Name</th>
                         <th>E-Mail</th>
-                        <th>Управление</th>
+                        <th>Management</th>
                     </tr>
                 </thead>
                 @foreach ($users as $user)
@@ -240,11 +238,11 @@ class Users extends Controller {
                     <td>{{ $user->email }}</td>
                     <td>
                         @if ($user->trashed())
-                            <div class="btn btn-default btn-xs senddata" href="/users/restore/{{$user->id}}">Восстановить бедолагу</div>
-                            <div class="btn btn-default btn-xs senddata really" data-link="/users/force-delete/{{$user->id}}">Удалить полностью</div>
+                            <div class="btn btn-default btn-xs senddata" href="/users/restore/{{$user->id}}">Restore</div>
+                            <div class="btn btn-default btn-xs senddata really" data-link="/users/force-delete/{{$user->id}}">Remove completely</div>
                         @else
-                            <a class="btn btn-default btn-xs" href="/users/save/{{$user->id}}">Редактировать</a>
-                            <div class="btn btn-default btn-xs senddata" data-link="/users/delete/{{$user->id}}">Удалить</div>
+                            <a class="btn btn-default btn-xs" href="/users/save/{{$user->id}}">Edit</a>
+                            <div class="btn btn-default btn-xs senddata" data-link="/users/delete/{{$user->id}}">Delete</div>
                         @endif
                     </td>
                 </tr>
@@ -257,7 +255,7 @@ class Users extends Controller {
 @endsection
 ```
 
-В общем-то, это всё. Минимальный функционал для создания, редактирования и удаления пользователей в системе мы написали, можно уже начинать им пользоваться.
+In general, that's all. We created a minimum functionality to create, edit and delete users in the system, we have written, we can already start to use it.
 
 
 
@@ -365,8 +363,6 @@ $.ajaxSetup({
 });
 </script>
 ```
-
-#### 
 
 #### Создайте контроллер формы
 
