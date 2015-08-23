@@ -50,8 +50,53 @@ trait FormProcessLogic {
         // Получаем чистый массив значений, в котором содержатся только те значения,
         // которые перечислены среди полей редактирования модели
         $clean_values = array_only($values, $fields_names);
-        
+
+        if (property_exists($this, '_form_params'))
+        {
+            // При создании новой записи и при включенном режиме order, вставляем нужный порядковый номер для сортировки
+            if (in_array('order', $this->_form_params) && $mode === 'add')
+            {
+                $order = new Order($model->getTable());
+                $clean_values['order'] = $order->get_insert_order();
+            }
+
+            if (in_array('gorder', $this->_form_params))
+            {
+                $gorder_group_field = $this->_form_gorder_group_field;
+                $gorder = new GroupOrder($model->getTable(), $gorder_group_field);
+
+                if ($mode === 'edit')
+                {
+                    $old_order_value = $model->order;
+                    $old_group_id = $model->$gorder_group_field;
+                    // Если это редактирование записи, то обновляем поле order только в том случае, когда была изменена группа записи
+                    if ($clean_values[$gorder_group_field] != $old_group_id) {
+                        $gorder->set_group($clean_values[$gorder_group_field]);
+                        $clean_values['order'] = $gorder->get_insert_order();
+                    }
+                }
+                else
+                {
+                    $gorder->set_group($clean_values[$gorder_group_field]);
+                    $clean_values['order'] = $gorder->get_insert_order();
+                }
+            }
+        }
+
         $this->saveModelItem($request, $model, $fields_names, $clean_values);
+
+        if (property_exists($this, '_form_params'))
+        {
+            // Если включен режим gorder, то проверим, не изменилась ли группа у записи
+            if ($mode === 'edit' && in_array('gorder', $this->_form_params)) {
+                if ($model->$gorder_group_field != $old_group_id) {
+                    // Вернёмся к старой группе и сдвинем все записи чтобы закрыть пустое место
+                    $gorder->set_group($old_group_id);
+                    $gorder->update_after_del($old_order_value);
+                }
+            }
+        }
+
 
         // Если был передан коллбек, вызовем его
         if ($success_save_callback) {
@@ -59,7 +104,7 @@ trait FormProcessLogic {
         }
 
         $controller_strings = $this->getStrings($model);
-        
+
         Session::flash('message','success|' . array_get($controller_strings[$mode],'success',
             ($mode === 'add')
                 ? 'Объект успешно создан'
@@ -132,17 +177,17 @@ trait FormProcessLogic {
         if (!empty($has_many_throughs)) {
             DB::beginTransaction();
         }
-        
+
         $validation_rules = null;
         if (method_exists($this, 'getValidationRules')) {
             $validation_rules = $this->getValidationRules($model);
         }
-        
+
         // Если были указаны правила валидации, проверим входящие данные
         if ($validation_rules) {
             $this->validate($request, $validation_rules);
         }
-        
+
         $model->save();
 
         // Заполним связи новыми данными
@@ -178,9 +223,9 @@ trait FormProcessLogic {
      * @return array
      */
     protected function getColumnsInfo($model) {
-        
+
         $columns = array();
-        
+
         switch (DB::connection()->getConfig('driver')) {
             case 'pgsql':
                 $query = "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '".$model->getTable()."'";
@@ -191,9 +236,9 @@ trait FormProcessLogic {
                         'nullable' => ($column->is_nullable === 'YES')
                     ];
                 }
-                
+
                 $columns = array_reverse($columns);
-                
+
             break;
 
             case 'mysql':
@@ -206,7 +251,7 @@ trait FormProcessLogic {
                     ];
                 }
             break;
-        
+
             case 'sqlite':
                 $query = 'PRAGMA table_info('.$model->getTable().')';
                 foreach(DB::select($query) as $column)
@@ -217,15 +262,15 @@ trait FormProcessLogic {
                     ];
                 }
             break;
-        
+
             default:
                 $error = 'Database driver not supported: '.DB::connection()->getConfig('driver');
                 throw new Exception($error);
         }
 
         return $columns;
-    }    
-    
+    }
+
     /**
      * Удаление записи из таблицы
      * @param type $id
@@ -296,11 +341,11 @@ trait FormProcessLogic {
      * @return string
      */
     protected function generateForm($id = null, $values = null) {
-        
+
         if (! property_exists($this, '_model_name')) {
             throw new Exception("Пожалуйста, укажите название модели, с которой работает контроллер.\rПример кода: protected \$_model_name = 'App\Models\User';");
         }
-        
+
         $model_name = $this->_model_name;
 
         if (empty($id)) {
@@ -313,7 +358,7 @@ trait FormProcessLogic {
         $fields = $this->getFields($mode, false);
 
         $view_theme = config('prettyforms.theme', 'bootstrap3');
-        
+
         $view = View::make('prettyforms::save-' . $view_theme);
         $view->fields  = $fields;
         $view->mode    = $mode;
@@ -327,7 +372,7 @@ trait FormProcessLogic {
             : (($mode === 'add')
                 ? 'Создание объекта'
                 : 'Редактирование объекта');
-        
+
         if (method_exists($this, 'setContent')) {
             $this->setContent($view, $title);
         } else {
@@ -399,12 +444,12 @@ trait FormProcessLogic {
      * являются лишь информационными и не должны изменяться во время сохранения данных
      */
     protected function getFields($mode, $only_edited_fields = true) {
-        
+
         if (! property_exists($this, 'fields')) {
             throw new Exception("Пожалуйста, укажите в вашем классе свойство \$fields, в котором будут описаны те поля, которые должны редактироваться у объекта."
                 . "\rПример кода: protected \$fields = [ /* список редактируемых полей */ ];");
         }
-        
+
         if ($only_edited_fields) {
             if ($mode === 'edit' AND isset($this->fields_edit)) {
                 $fields_param = 'fields_edit';
@@ -437,5 +482,65 @@ trait FormProcessLogic {
     protected function getHomeLink($model) {
         return pf_controller();
     }
+
+    /**
+     * Поднять определенную запись вверх в списке
+     * @param int $id Номер записи в таблице
+     * @return boolean
+     */
+    protected function upRecord($id)
+    {
+        $model_name = $this->_model_name;
+        $model = $model_name::findOrFail($id);
+
+        if (in_array('gorder', $this->_form_params)) {
+            $order_field = $this->_form_gorder_group_field;
+            $gorder = new GroupOrder($model->getTable(), $order_field);
+            $gorder->set_group($model->$order_field);
+            $result = $gorder->up($model->id);
+        } else {
+            $order = new Order($model->getTable());
+            $result = $order->up($model->id);
+        }
+
+        if ($result) {
+            return [ 'refresh' => '', ];
+        } else {
+            return [ 'error' => [ 'title' => '', 'text' => 'Невозможно поднять запись', ]];
+        }
+    }
+
+    /**
+     * Опустить определенную запись вверх в списке
+     * @param int $id Номер записи в таблице
+     * @return boolean
+     */
+    protected function downRecord($id)
+    {
+        $model_name = $this->_model_name;
+        $model = $model_name::findOrFail($id);
+
+        if (in_array('gorder', $this->_form_params))
+        {
+            $group_order_field = $this->_form_gorder_group_field;
+
+            $gorder      = new GroupOrder($model->getTable(), $group_order_field);
+            $gorder->set_group($model->$group_order_field);
+
+            $result = $gorder->down($model->id);
+        }
+        else
+        {
+            $order = new Order($model->getTable());
+            $result = $order->down($model->id);
+        }
+
+        if ($result) {
+            return [ 'refresh' => '', ];
+        } else {
+            return [ 'error' => [ 'title' => '', 'text' => 'Невозможно опустить запись', ]];
+        }
+    }
+
 
 }
