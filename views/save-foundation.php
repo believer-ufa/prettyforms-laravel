@@ -25,7 +25,7 @@
         <br/>
 
         <div class="senddata button success"
-             data-link="<?= Request::getUri() ?>"
+             data-link="<?= Request::getRequestUri() ?>"
              id="btn-save"
              data-input="#save-form">
                 <?= $mode === 'add' ? 'Создать' : 'Применить' ?>

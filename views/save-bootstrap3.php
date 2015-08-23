@@ -20,7 +20,7 @@
         <br/>
 
         <div class="senddata btn btn-primary"
-             data-link="<?=Request::getUri()?>"
+             data-link="<?=Request::getRequestUri()?>"
              id="btn-save"
              data-input="#save-form">
             <?= $mode === 'add' ? 'Создать' : 'Применить' ?>
