@@ -97,10 +97,10 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
 	$field['attributes']['data-placeholder'] = $label . '..';
 	if (empty($options)) { $options = ['' => 'список пуст']; }
 	echo Form::select($input_name, $options, $selected, $field['attributes']);
-    
+
     if ($field['tag'] === 'select-multi') { ?>
     <script>
-        $(window).load(function() {
+        <?=config('prettyforms.js-load-wrapper')?>(function() {
             $('select[name="<?=$input_name?>"]').select2();
         });
     </script>
@@ -120,9 +120,9 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
 			$options[$selected_item->id] = pf_get_item_value($selected_item,array_get($field,'display_as'));
 		}
 	}
-    
+
 	echo Form::select($input_name, $options, $selected, $field['attributes']); ?>
-    
+
     <script>
         <?=config('prettyforms.js-load-wrapper')?>(function(){
             $('select[name="<?=$input_name?>"]').select2({
