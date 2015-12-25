@@ -27,7 +27,8 @@ if (isset($field['options'])) {
         ];
 
         if (isset($field['model_desc'])) {
-            $option['desc'] = $model_item->$field['model_desc'];
+            $desc_field = $field['model_desc'];
+            $option['desc'] = $model_item->$desc_field;
         }
 
         $options[] = $option;
