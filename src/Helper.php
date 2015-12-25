@@ -4,11 +4,14 @@ namespace PrettyFormsLaravel;
 
 use Illuminate\Console\AppNamespaceDetectorTrait;
 
-class Helper {
+class Helper
+{
     use AppNamespaceDetectorTrait;
-    
-    static function getCurrentAppNamespace() {
+
+    public static function getCurrentAppNamespace()
+    {
         $object = new self;
+
         return $object->getAppNamespace();
     }
 }

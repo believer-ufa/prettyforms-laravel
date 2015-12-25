@@ -12,7 +12,7 @@ return [
     'section' => 'content',
 
     // Текущая активная тема, в соответствии с которой будут генерироваться формы
-	'theme' => 'bootstrap3',
+    'theme' => 'bootstrap3',
 
     // К вашему сайту уже подключён jQuery-плагин "select2" для генерации удобных Select'ов?
     // Если да, установите данный параметр в "true", чтобы генератор форм не стал подключать его через CDN
@@ -36,7 +36,7 @@ return [
 
     // Автоматически отображать хлебные крошки над формой, если они были установлены для маршрута?
     'show-breadcrumbs' => true,
-    
+
     // Шаблон для всплывающих сообщений после совершения каких-либо действий с системой
     'messages-template' => '<div class="alert alert-%s alert-dismissible" role="alert"><button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button>%s</div>',
     // Вариант шаблона сообщения для фреймворка Foundation:

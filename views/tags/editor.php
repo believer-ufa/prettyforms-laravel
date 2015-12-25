@@ -2,12 +2,16 @@
 
 $ckeditor_paths = config('prettyforms.ckeditor-paths');
 
-if ($ckeditor_paths === 'cdn') { ?>
+if ($ckeditor_paths === 'cdn') {
+    ?>
     <script src="//cdn.ckeditor.com/4.4.7/standard/ckeditor.js"></script>
-<?php } elseif(is_array($ckeditor_paths)) {
-    foreach($ckeditor_paths as $path) { ?>
+<?php 
+} elseif (is_array($ckeditor_paths)) {
+    foreach ($ckeditor_paths as $path) {
+        ?>
         <script type="text/javascript" src="<?=$path?>" ></script>
-    <?php }
+    <?php 
+    }
 } ?>
 
 <?php
@@ -20,9 +24,12 @@ echo Form::textarea($input_name, pf_get_value($name, $item, $values), $field['at
 <br>
 <script>
     <?=config('prettyforms.js-load-wrapper')?>(function() {
-        <?php if (isset($field['ckeditor_function'])) { ?>
+        <?php if (isset($field['ckeditor_function'])) {
+    ?>
             <?=$field['ckeditor_function']?>('<?=$input_name?>');
-        <?php } else { ?>
+        <?php 
+} else {
+    ?>
             var element = '<?=$input_name?>';
 
             if (CKEDITOR.instances[element]) {
@@ -48,6 +55,7 @@ echo Form::textarea($input_name, pf_get_value($name, $item, $values), $field['at
             });
 
             CKEDITOR.config.height = 300;
-        <?php } ?>
+        <?php 
+} ?>
     });
 </script>

@@ -1,7 +1,7 @@
 <?php
 $column_value = pf_get_value($name, $item, $values);
 
-$star = function($rate_step) use ($column_value) {
+$star = function ($rate_step) use ($column_value) {
     if ($rate_step <= $column_value) {
         return '';
     } else {
@@ -12,9 +12,10 @@ $star = function($rate_step) use ($column_value) {
 ?>
 
 <div class="block-rating--bar block-rating-input">
-    <?php foreach([1,2,3,4,5] as $rate_step) {
-        ?><span data-level="<?=$rate_step?>" class="glyphicon glyphicon-star<?=$star($rate_step)?>" aria-hidden="true"></span><?php
-    } ?>
+    <?php foreach ([1, 2, 3, 4, 5] as $rate_step) {
+    ?><span data-level="<?=$rate_step?>" class="glyphicon glyphicon-star<?=$star($rate_step)?>" aria-hidden="true"></span><?php
+
+} ?>
 
     <?=Form::hidden($input_name, $column_value);?>
     <div class="clearfix"></div>

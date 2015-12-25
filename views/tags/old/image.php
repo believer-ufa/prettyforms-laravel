@@ -1,10 +1,10 @@
 <div style="width:130px;float:left;">
     <div id="<?= $input_name ?>-photography"
          style="background-image:url(<?php if ($item->$field['file_relationship']->exists) {
-             echo $item->$field['file_relationship']->link();
-         } else {
-             echo '/themes/images/profile_avatar_default.png';
-         } ?>)"></div>
+    echo $item->$field['file_relationship']->link();
+} else {
+    echo '/themes/images/profile_avatar_default.png';
+} ?>)"></div>
     <div id="<?= $input_name ?>-uploadphoto"></div>
     <input name="<?= $input_name ?>" id="<?= $input_name ?>-avatar_id" type="hidden"
            value="<?= pf_get_value($name, $item, $values) ?>"/>

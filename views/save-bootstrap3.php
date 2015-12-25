@@ -1,12 +1,14 @@
 <?php
   $template = config('prettyforms.extend-template');
-  $section = config('prettyforms.section');
+  $section  = config('prettyforms.section');
 ?>
 
-<?php if ($template) { $__env->startSection($section); } ?>
+<?php if ($template) {
+    $__env->startSection($section);
+} ?>
 
-    <?php if (config('prettyforms.show-breadcrumbs') AND class_exists('Breadcrumbs') AND ! empty(Route::currentRouteName())): ?>
-        <?=Breadcrumbs::render(Route::currentRouteName(),$item)?>
+    <?php if (config('prettyforms.show-breadcrumbs') and class_exists('Breadcrumbs') and ! empty(Route::currentRouteName())): ?>
+        <?=Breadcrumbs::render(Route::currentRouteName(), $item)?>
     <?php endif; ?>
 
     <div id="save-form">
@@ -14,7 +16,7 @@
     		<?php if (isset($strings[$mode]['caption'])): ?>
     		  <h3><?=$strings[$mode]['caption']?></h3>
     		<?php endif; ?>
-            <?php echo view('prettyforms::inputs-bootstrap3', compact('item','fields', 'values'))->render() ?>
+            <?php echo view('prettyforms::inputs-bootstrap3', compact('item', 'fields', 'values'))->render() ?>
         </div>
 
         <br/>
@@ -36,6 +38,10 @@
         <div class="clear"></div>
     </div>
 
-<?php if ($template) { $__env->stopSection(); } ?>
+<?php if ($template) {
+    $__env->stopSection();
+} ?>
 
-<?php if ($template) { echo $__env->make($template, array_except(get_defined_vars(), array('__data', '__path')))->render(); }
+<?php if ($template) {
+    echo $__env->make($template, array_except(get_defined_vars(), ['__data', '__path']))->render();
+}

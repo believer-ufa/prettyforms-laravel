@@ -32,16 +32,17 @@
  *
  * [необ.] $values['имя объекта'] - массив выбранных значений, который будет перекрывать выбранные элементы
  */
-
 ?>
 
-<?php if (config('prettyforms.select2-included') === false) { ?>
+<?php if (config('prettyforms.select2-included') === false) {
+    ?>
     <link href='https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.0-rc.2/css/select2.min.css' rel='stylesheet' type='text/css'>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.0-rc.2/js/select2.full.min.js"></script>
-<?php } ?>
+<?php 
+} ?>
 
 <?php
-if (!isset($name)) {
+if ( ! isset($name)) {
     $name = $input_name;
 }
 
@@ -54,34 +55,34 @@ if (isset($field['attributes']['class'])) {
 }
 
 // Если это простой селект, то вытащим из БД его пункты выбора
-if (in_array($field['tag'],['select-multi','select'],true)) {
-	if (isset($field['options'])) {
-		$options = $field['options'];
-	} elseif (isset($field['model'])) {
-		$model = new $field['model'];
+if (in_array($field['tag'], ['select-multi', 'select'], true)) {
+    if (isset($field['options'])) {
+        $options = $field['options'];
+    } elseif (isset($field['model'])) {
+        $model = new $field['model'];
 
-		// Отфильтруем данные, если есть необходимость
-		if (!empty($field['model_wheres'])) {
-			foreach ($field['model_wheres'] as $where) {
-				$model = $model->where($where[0], $where[1], $where[2]);
-			}
-		}
+        // Отфильтруем данные, если есть необходимость
+        if ( ! empty($field['model_wheres'])) {
+            foreach ($field['model_wheres'] as $where) {
+                $model = $model->where($where[0], $where[1], $where[2]);
+            }
+        }
 
-		// Отсортируем данные, если есть необходимость
-		if (!empty($field['model_orders'])) {
-			$model = $model->orderBy($field['model_orders']);
-		}
+        // Отсортируем данные, если есть необходимость
+        if ( ! empty($field['model_orders'])) {
+            $model = $model->orderBy($field['model_orders']);
+        }
 
-		$options = pf_array_pluck_object($model->get(), 'id', array_get($field,'display_as'));
-		if (!empty($field['placeholder'])) {
-			$options = ['' => trans($field['placeholder']) ] + $options;
-		}
-	}
+        $options = pf_array_pluck_object($model->get(), 'id', array_get($field, 'display_as'));
+        if ( ! empty($field['placeholder'])) {
+            $options = ['' => trans($field['placeholder'])] + $options;
+        }
+    }
 }
 
-if (in_array($field['tag'],['select-multi','search-multi'],true)) {
+if (in_array($field['tag'], ['select-multi', 'search-multi'], true)) {
     $field['attributes']['multiple'] = '.';
-    if ($item->exists AND empty($values[$name])) {
+    if ($item->exists and empty($values[$name])) {
         $selected = array_pluck($item->$name()->get(), 'id');
     }
 } else {
@@ -92,36 +93,38 @@ if (in_array($field['tag'],['select-multi','search-multi'],true)) {
     }
 }
 
-if (in_array($field['tag'],['select-multi','select'],true)) {
+if (in_array($field['tag'], ['select-multi', 'select'], true)) {
+    $field['attributes']['data-placeholder'] = $label.'..';
+    if (empty($options)) {
+        $options          = ['' => 'список пуст'];
+    }
+    echo Form::select($input_name, $options, $selected, $field['attributes']);
 
-	$field['attributes']['data-placeholder'] = $label . '..';
-	if (empty($options)) { $options = ['' => 'список пуст']; }
-	echo Form::select($input_name, $options, $selected, $field['attributes']);
-
-    if ($field['tag'] === 'select-multi') { ?>
+    if ($field['tag'] === 'select-multi') {
+        ?>
     <script>
         <?=config('prettyforms.js-load-wrapper')?>(function() {
             $('select[name="<?=$input_name?>"]').select2();
         });
     </script>
-    <?php }
-
-} elseif(in_array($field['tag'],['search-multi','search'],true)) {
-
-    $field['attributes']['data-placeholder'] = !empty($field['placeholder'])
+    <?php 
+    }
+} elseif (in_array($field['tag'], ['search-multi', 'search'], true)) {
+    $field['attributes']['data-placeholder'] = ! empty($field['placeholder'])
         ? trans($field['placeholder'])
         : trans('prettyforms::search.default_placeholder');
 
-	// Изначально селект имеет в своём списке только те значения, которые уже присвоены к этому объекту
-	$options = [];
+    // Изначально селект имеет в своём списке только те значения, которые уже присвоены к этому объекту
+    $options = [];
 
-	if ($selected) {
-		foreach($field['model']::whereIn('id',(array) $selected )->get() as $selected_item) {
-			$options[$selected_item->id] = pf_get_item_value($selected_item,array_get($field,'display_as'));
-		}
-	}
+    if ($selected) {
+        foreach ($field['model']::whereIn('id', (array) $selected)->get() as $selected_item) {
+            $options[$selected_item->id] = pf_get_item_value($selected_item, array_get($field, 'display_as'));
+        }
+    }
 
-	echo Form::select($input_name, $options, $selected, $field['attributes']); ?>
+    echo Form::select($input_name, $options, $selected, $field['attributes']);
+    ?>
 
     <script>
         <?=config('prettyforms.js-load-wrapper')?>(function(){
@@ -135,11 +138,16 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
                   },
                   processResults: function (data) {
                     return {
-                        <?php if (isset($field['ajax_process_function'])) { ?>
+                        <?php if (isset($field['ajax_process_function'])) {
+    ?>
                             results: <?=$field['ajax_process_function']?>(data)
-                        <?php } else { ?>
+                        <?php 
+} else {
+    ?>
                             results: data
-                        <?php } ?>
+                        <?php 
+}
+    ?>
                     };
                   },
                   cache: true
@@ -150,4 +158,5 @@ if (in_array($field['tag'],['select-multi','select'],true)) {
         });
     </script>
 <?php
+
 }

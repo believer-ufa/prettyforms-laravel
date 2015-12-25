@@ -5,7 +5,7 @@ if (isset($field['attributes']['class'])) {
 } else {
     $field['attributes']['class'] = 'form-control';
 }
-if (! isset($field['attributes']['rows'])) {
+if ( ! isset($field['attributes']['rows'])) {
     $field['attributes']['rows'] = '3';
 }
 
