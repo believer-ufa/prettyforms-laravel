@@ -1,4 +1,4 @@
-<?
+<?php
 
 namespace PrettyFormsLaravel;
 
@@ -134,7 +134,7 @@ class Order
         if (is_numeric($id)) {
             $order = $this->get_order($id);
             $prev = $this->get_prev($order);
-            if (!is_null($prev) && $prev->count() > 0) {
+            if ($prev) {
                 DB::table($this->t_name)
                     ->where("id", $prev->id)
                     ->increment($this->order_field);
@@ -161,10 +161,10 @@ class Order
         {
             $order = $this->get_order($id);
             $next = $this->get_next($order);
-            if (!is_null($next) && $next->count() > 0)
+            if ($next)
             {
                 DB::table($this->t_name)
-                    ->where("id", "=", $next->get("id"))
+                    ->where("id", "=", $next->id)
                     ->decrement($this->order_field);
 
                 DB::table($this->t_name)
@@ -203,7 +203,7 @@ class Order
     {
         if (is_numeric($id))
         {
-            $rez = DB::table($this->t_name)->where("id", $id)->get();
+            $rez = DB::table($this->t_name)->where("id", $id)->first();
 
             if (is_numeric($rez->{$this->order_field}))
             {
@@ -223,7 +223,7 @@ class Order
     {
         if (is_numeric($order) && $order < $this->max_order)
         {
-            return DB::table($this->t_name)->where($this->order_field, $order + 1)->get();
+            return DB::table($this->t_name)->where($this->order_field, $order + 1)->first();
         }
         return null;
     }
@@ -238,9 +238,8 @@ class Order
     {
         if (is_numeric($order) && $order > $this->min_order)
         {
-            return DB::table($this->t_name)->where($this->order_field, $order - 1)->get();
+            return DB::table($this->t_name)->where($this->order_field, $order - 1)->first();
         }
         return null;
     }
 }
-
