@@ -281,13 +281,36 @@ trait FormProcessLogic
             return $this->generateNotFoundErrorCommand();
         }
 
+        if (property_exists($this, '_form_params')) {
+            if (in_array('Illuminate\Database\Eloquent\SoftDeletes',class_uses($model))) {
+                if (in_array('order', $this->_form_params)) {
+                    $old_order = $model->order;
+                } elseif (in_array('gorder', $this->_form_params)) {
+                    $old_order = $model->order;
+                    $gorder_group_field = $this->_form_gorder_group_field;
+                    $gorder = new Gorder($model->getTable(), $gorder_group_field);
+                    $gorder->set_group($model->$gorder_group_field);
+                }
+            }
+        }
+        
         $model->delete();
 
         $home_link = $this->getHomeLink($model);
-
+        
         if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses($model))) {
             Session::flash('message', 'success|Объект мягко удалён из системы, и его еще возможно легко восстановить.');
         } else {
+            
+            if (property_exists($this, '_form_params')) {
+                if (in_array('order', $this->_form_params)) {
+                    $order = new Order($model->getTable());
+                    $order->update_after_del($old_order);
+                } elseif (in_array('gorder', $this->_form_params)) {
+                    $gorder->update_after_del($old_order);
+                }
+            }
+                
             Session::flash('message', 'success|Объект полностью удалён из системы.');
         }
 
@@ -321,9 +344,29 @@ trait FormProcessLogic
             return $this->generateNotFoundErrorCommand();
         }
 
+        if (property_exists($this, '_form_params')) {
+            if (in_array('order', $this->_form_params)) {
+                $old_order = $model->order;
+            } elseif (in_array('gorder', $this->_form_params)) {
+                $old_order = $model->order;
+                $gorder_group_field = $this->_form_gorder_group_field;
+                $gorder = new Gorder($model->getTable(), $gorder_group_field);
+                $gorder->set_group($model->$gorder_group_field);
+            }
+        }
+
         $model->forceDelete();
 
         Session::flash('message', 'success|Объект полностью удалён из системы');
+
+        if (property_exists($this, '_form_params')) {
+            if (in_array('order', $this->_form_params)) {
+                $order = new Order($model->getTable());
+                $order->update_after_del($old_order);
+            } elseif (in_array('gorder', $this->_form_params)) {
+                $gorder->update_after_del($old_order);
+            }            
+        }
 
         return [
             'refresh' => '',
