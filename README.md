@@ -52,15 +52,15 @@ PrettyForms are depends from `illuminate/html` and pulls him along during instal
 ```php
 return [
   'providers' => [
-  	    // ... your service providers
-        'Illuminate\Html\HtmlServiceProvider',
-        'PrettyFormsLaravel\ServiceProvider',
+  	// ... your service providers
+        Collective\Html\HtmlServiceProvider::class,
+        PrettyFormsLaravel\ServiceProvider::class,
   ],
   
   'aliases' => [
         // ... your facades
-        'Form'        => 'Illuminate\Html\FormFacade',
-        'HTML'        => 'Illuminate\Html\HtmlFacade',
+        'Form'        => Collective\Html\FormFacade::class,
+        'HTML'        => Collective\Html\HtmlFacade::class,
   ],
 ];  
 ```
@@ -311,15 +311,15 @@ PrettyForms зависит от компонента `illuminate/html` и под
 ```php
 return [
   'providers' => [
-  	    // ... ваши сервис-провайдеры
-        'Illuminate\Html\HtmlServiceProvider',
-        'PrettyFormsLaravel\ServiceProvider',
+  	// ... ваши сервис-провайдеры
+        Collective\Html\HtmlServiceProvider::class,
+        PrettyFormsLaravel\ServiceProvider::class,
   ],
   
   'aliases' => [
         // ... ваши фасады
-        'Form'        => 'Illuminate\Html\FormFacade',
-        'HTML'        => 'Illuminate\Html\HtmlFacade',
+        'Form'        => Collective\Html\FormFacade::class,
+        'HTML'        => Collective\Html\HtmlFacade::class,
   ],
 ];  
 ```
