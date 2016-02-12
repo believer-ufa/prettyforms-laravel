@@ -1,43 +1,18 @@
 <?php
 
-if (isset($field['options'])) {
-    $options = $field['options'];
-} elseif (isset($field['model'])) {
-    $model = new $field['model'];
-
-    // Отфильтруем данные, если есть необходимость
-    if ( ! empty($field['model_wheres'])) {
-        foreach ($field['model_wheres'] as $where) {
-            $model = $model->where($where[0], $where[1], $where[2]);
-        }
-    }
-
-    // Отсортируем данные, если есть необходимость
-    if ( ! empty($field['model_orders'])) {
-        foreach ((array) $field['model_orders'] as $order_field) {
-            $model = $model->orderBy($order_field);
-        }
-    }
-
-    $options = [];
-    foreach ($model->get() as $model_item) {
-        $option = [
-            'value' => $model_item->id,
-            'text'  => pf_get_item_value($model_item, array_get($field, 'display_as')),
-        ];
-
-        if (isset($field['model_desc'])) {
-            $desc_field     = $field['model_desc'];
-            $option['desc'] = $model_item->$desc_field;
-        }
-
-        $options[] = $option;
-    }
+if (!isset($field['options'])) {
+    throw new Exception('Пожалуйста, добавьте параметр options в ваше поле типа checkbox-multi.');
 }
 
+// Получим массив опций, либо путём вызова коллбека, либо просто получением данных
+$options = (is_callable($field['options'])) ? $field['options']($item) : $field['options'];
+
 $selected = [];
-if ( ! is_null($item->id)) {
-    $selected = array_pluck($item->$name()->get(), 'id');
+
+// Если объект существует, значит у него могут быть уже выбранные значения.
+// Получим их из базы
+if ($item->exists) {
+    $selected = array_pluck($item->$name()->select('id')->get(), 'id');
 }
 
 if (empty($options)) {
@@ -51,8 +26,7 @@ if (empty($options)) {
 
 ?>
 
-<?php foreach ($options as $option) {
-    ?>
+<?php foreach ($options as $option) { ?>
 <div class="checkbox">
     <label>
         <?= Form::checkbox(
@@ -60,17 +34,11 @@ if (empty($options)) {
             $option['value'],
             in_array($option['value'], $selected),
             $field['attributes']
-        ).$option['text'];
-    ?>
-        <?php $desc = array_get($option, 'desc') ?>
-        <?php if ($desc) {
-    ?>
+        ).$option['text']; ?>
+        <?php if ($desc = array_get($option, 'desc')) { ?>
             <br/>
             <small class="text-muted"><?=nl2br($desc)?></small>
-        <?php 
-}
-    ?>
+        <?php } ?>
     </label>
 </div>
-<?php 
-} ?>
+<?php } ?>

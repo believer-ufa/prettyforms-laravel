@@ -25,15 +25,6 @@
                     <legend><?= $strings[$mode]['legend'] ?></legend>
                 @endif
                 <?php echo view('prettyforms::inputs-kube', compact('item', 'fields', 'values'))->render() ?>
-
-                @if (isset($lang_inputs))
-                    <?= $lang_inputs ?>
-                @endif
-
-                @if (isset($lang_buttons))
-                    <h4>Языковые данные</h4>
-                    <?= $lang_buttons ?>
-                @endif
             </fieldset>
 
             <br/>

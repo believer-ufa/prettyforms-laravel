@@ -56,58 +56,46 @@ if (isset($field['attributes']['class'])) {
 
 // Если это простой селект, то вытащим из БД его пункты выбора
 if (in_array($field['tag'], ['select-multi', 'select'], true)) {
-    if (isset($field['options'])) {
-        $options = $field['options'];
-    } elseif (isset($field['model'])) {
-        $model = new $field['model'];
+    // Получим массив опций, либо путём вызова коллбека, либо просто получением данных
+    $options = (is_callable($field['options'])) ? $field['options']($item) : $field['options'];
 
-        // Отфильтруем данные, если есть необходимость
-        if ( ! empty($field['model_wheres'])) {
-            foreach ($field['model_wheres'] as $where) {
-                $model = $model->where($where[0], $where[1], $where[2]);
-            }
-        }
-
-        // Отсортируем данные, если есть необходимость
-        if ( ! empty($field['model_orders'])) {
-            $model = $model->orderBy($field['model_orders']);
-        }
-
-        $options = pf_array_pluck_object($model->get(), 'id', array_get($field, 'display_as'));
-        if ( ! empty($field['placeholder'])) {
-            $options = ['' => trans($field['placeholder'])] + $options;
-        }
+    // Добавим также плейсхолдер, если он был указан
+    if ( ! empty($field['placeholder'])) {
+        $options = ['' => trans($field['placeholder'])] + $options;
     }
 }
 
 if (in_array($field['tag'], ['select-multi', 'search-multi'], true)) {
+    // Если это мульти селектор, то получим все значения
     $field['attributes']['multiple'] = '.';
     if ($item->exists and empty($values[$name])) {
         $selected = array_pluck($item->$name()->get(), 'id');
     }
 } else {
-    if (isset($item)) {
-        $selected = pf_get_value($name, $item, $values);
+    // Для обычного одиночного выбора попытаемся вытащить выбранное текущее значение
+    if ($item->exists) {
+        $selected = get_value($name, $item, $values);
     } else {
         $selected = array_get($values, $name);
     }
 }
 
+// Если это поле выбора
 if (in_array($field['tag'], ['select-multi', 'select'], true)) {
     $field['attributes']['data-placeholder'] = $label.'..';
     if (empty($options)) {
-        $options          = ['' => 'список пуст'];
+        $options = ['' => 'список пуст'];
     }
+    
     echo Form::select($input_name, $options, $selected, $field['attributes']);
 
-    if ($field['tag'] === 'select-multi') {
-        ?>
+    if ($field['tag'] === 'select-multi') { ?>
     <script>
         <?=config('prettyforms.js-load-wrapper')?>(function() {
             $('select[name="<?=$input_name?>"]').select2();
         });
     </script>
-    <?php 
+    <?php
     }
 } elseif (in_array($field['tag'], ['search-multi', 'search'], true)) {
     $field['attributes']['data-placeholder'] = ! empty($field['placeholder'])
@@ -124,6 +112,7 @@ if (in_array($field['tag'], ['select-multi', 'select'], true)) {
     }
 
     echo Form::select($input_name, $options, $selected, $field['attributes']);
+    
     ?>
 
     <script>
@@ -138,16 +127,11 @@ if (in_array($field['tag'], ['select-multi', 'select'], true)) {
                   },
                   processResults: function (data) {
                     return {
-                        <?php if (isset($field['ajax_process_function'])) {
-    ?>
+                        <?php if (isset($field['ajax_process_function'])) { ?>
                             results: <?=$field['ajax_process_function']?>(data)
-                        <?php 
-} else {
-    ?>
+                        <?php  } else { ?>
                             results: data
-                        <?php 
-}
-    ?>
+                        <?php  } ?>
                     };
                   },
                   cache: true

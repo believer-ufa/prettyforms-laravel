@@ -5,7 +5,6 @@ namespace PrettyFormsLaravel;
 use DB;
 use Eloquent;
 use Exception;
-use Illuminate\Http\Request as LaravelRequest;
 use Input;
 use Request;
 use Session;
@@ -35,12 +34,12 @@ trait FormProcessLogic
      * Добавляет/изменяет запись в таблице. При желании, можно указать дополнительные значения в массиве $values, за основу же берутся данные из $_POST
      *
      * @param int $id Номер записи в таблице
-     * @param array $values Массив значений
-     * @param function $success_save_callback Функция, внутри которой с моделью можно проделать какие-то действия после её сохранения
+     * @param array $values Массив значений, которые надо применить к сохраняемому объекту поверх значений из запроса клиента
+     * @param function $onSuccessSave Функция, внутри которой с моделью можно проделать какие-то действия после её сохранения
      *
      * @return bool
      */
-    protected function save(LaravelRequest $request, $id = null, $values = null, $success_save_callback = null)
+    protected function save($id = null, $values = null, $onSuccessSave = null)
     {
         $model_name = $this->_model_name;
         $model      = $model_name::findOrNew($id); /* @var $model Eloquent */
@@ -79,7 +78,7 @@ trait FormProcessLogic
             }
         }
 
-        $this->saveModelItem($request, $model, $fields_names, $clean_values);
+        $this->saveModelItem($model, $fields_names, $clean_values);
 
         if (property_exists($this, '_form_params')) {
             // Если включен режим gorder, то проверим, не изменилась ли группа у записи
@@ -92,11 +91,6 @@ trait FormProcessLogic
             }
         }
 
-        // Если был передан коллбек, вызовем его
-        if ($success_save_callback) {
-            $success_save_callback($model);
-        }
-
         $controller_strings = $this->getStrings($model);
 
         Session::flash('message', 'success|'.array_get($controller_strings[$mode], 'success',
@@ -104,6 +98,11 @@ trait FormProcessLogic
                 ? 'Объект успешно создан'
                 : 'Объект успешно отредактирован')
         );
+
+        // Если был передан коллбек, вызовем его вместо стандартного редиректа
+        if ($onSuccessSave) {
+            return $onSuccessSave($model);
+        }
 
         // Если всё прошло хорошо, генерируем ответ с командой редиректа на главную страницу текущего контроллера
         return [
@@ -114,12 +113,13 @@ trait FormProcessLogic
     /**
      * Добавляет/изменяет строку в базе
      *
+     * @param array $model Модель, которую мы сохраняем
      * @param array $fields_names Список названий колонок, с которыми необходимо работать
      * @param array $values Ассоциативный массив значений, которые надо будет сохранить
      *
      * @return bool
      */
-    private function saveModelItem(LaravelRequest $request, $model, $fields_names, $values)
+    private function saveModelItem($model, $fields_names, $values)
     {
         $columns = $this->getColumnsInfo($model);
 
@@ -181,7 +181,7 @@ trait FormProcessLogic
 
         // Если были указаны правила валидации, проверим входящие данные
         if ($validation_rules) {
-            $this->validate($request, $validation_rules);
+            $this->validate(Request::instance(), $validation_rules);
         }
 
         $model->save();
@@ -224,43 +224,17 @@ trait FormProcessLogic
     {
         $columns = [];
 
-        switch (DB::connection()->getConfig('driver')) {
-            case 'pgsql':
-                $query = "SELECT column_name, data_type, is_nullable FROM information_schema.columns WHERE table_name = '".$model->getTable()."'";
-                foreach (DB::select($query) as $column) {
-                    $columns[$column->column_name] = [
-                        'type'     => strtolower($column->data_type),
-                        'nullable' => ($column->is_nullable === 'YES'),
-                    ];
-                }
-
-                $columns = array_reverse($columns);
-
-            break;
-
-            case 'mysql':
-                $query = 'SHOW COLUMNS FROM '.$model->getTable();
-                foreach (DB::select($query) as $column) {
-                    $columns[$column->Field] = [
-                        'type'     => strtolower($column->Type),
-                        'nullable' => ($column->null === 'YES'),
-                    ];
-                }
-            break;
-
-            case 'sqlite':
-                $query = 'PRAGMA table_info('.$model->getTable().')';
-                foreach (DB::select($query) as $column) {
-                    $columns[$column->name] = [
-                        'type'     => strtolower($column->type),
-                        'nullable' => ($column->notnull == '0'),
-                    ];
-                }
-            break;
-
-            default:
-                $error = 'Database driver not supported: '.DB::connection()->getConfig('driver');
-                throw new Exception($error);
+        foreach(DB::connection()
+            ->getDoctrineConnection()
+            ->getSchemaManager()
+            ->listTableColumns($model->getTable()) as $field_name => $field_info)
+        {
+            // странно, иногда Doctrine SchemaManager возвращает
+            // название колонки в кавычках. пришлось поправить это небольшим костылём
+            $columns[str_replace('"','',$field_name)] = [
+                'type'     => strtolower($field_info->getType()->getName()),
+                'nullable' => $field_info->getNotNull() === false,
+            ];
         }
 
         return $columns;
@@ -270,10 +244,11 @@ trait FormProcessLogic
      * Удаление записи из таблицы
      *
      * @param type $id
+     * @param function $onSuccessDelete Выполнить какие-то действия при успешном удалении и вернуть особый ответ клиенту
      *
      * @return bool
      */
-    protected function delete($id)
+    protected function delete($id, $onSuccessDelete = null)
     {
         $model_name = $this->_model_name;
         $model      = $model_name::findOrNew($id); /* @var $model Eloquent */
@@ -293,15 +268,15 @@ trait FormProcessLogic
                 }
             }
         }
-        
+
         $model->delete();
 
         $home_link = $this->getHomeLink($model);
-        
+
         if (in_array('Illuminate\Database\Eloquent\SoftDeletes', class_uses($model))) {
             Session::flash('message', 'success|Объект мягко удалён из системы, и его еще возможно легко восстановить.');
         } else {
-            
+
             if (property_exists($this, '_form_params')) {
                 if (in_array('order', $this->_form_params)) {
                     $order = new Order($model->getTable());
@@ -310,8 +285,12 @@ trait FormProcessLogic
                     $gorder->update_after_del($old_order);
                 }
             }
-                
+
             Session::flash('message', 'success|Объект полностью удалён из системы.');
+        }
+
+        if (is_callable($onSuccessDelete)){
+            return $onSuccessDelete($model);
         }
 
         return [
@@ -319,7 +298,15 @@ trait FormProcessLogic
         ];
     }
 
-    protected function restore($id)
+    /**
+     * Восстановление записи в таблице
+     *
+     * @param type $id
+     * @param function $onSuccessRestore Выполнить какие-то действия при успешном восстановлении и вернуть особый ответ клиенту
+     *
+     * @return bool
+     */
+    protected function restore($id, $onSuccessRestore = null)
     {
         $model_name = $this->_model_name;
         $model      = $model_name::onlyTrashed()->find($id); /* @var $model Eloquent */
@@ -331,12 +318,24 @@ trait FormProcessLogic
 
         Session::flash('message', 'success|Объект восстановлен');
 
+        if (is_callable($onSuccessRestore)){
+            return $onSuccessRestore($model);
+        }
+
         return [
             'refresh' => '',
         ];
     }
 
-    protected function forceDelete($id)
+    /**
+     * Полное физическое удаление записи в таблице
+     *
+     * @param type $id
+     * @param function $onSuccessForcedelete Выполнить какие-то действия при успешном удалении и вернуть особый ответ клиенту
+     *
+     * @return bool
+     */
+    protected function forceDelete($id, $onSuccessForcedelete = null)
     {
         $model_name = $this->_model_name;
         $model      = $model_name::onlyTrashed()->find($id); /* @var $model Eloquent */
@@ -365,7 +364,11 @@ trait FormProcessLogic
                 $order->update_after_del($old_order);
             } elseif (in_array('gorder', $this->_form_params)) {
                 $gorder->update_after_del($old_order);
-            }            
+            }
+        }
+
+        if (is_callable($onSuccessForcedelete)) {
+            return $onSuccessForcedelete($model);
         }
 
         return [
@@ -378,10 +381,11 @@ trait FormProcessLogic
      *
      * @param int $id
      * @param array $values Ассоциативный массив со значениями полей, которые будут изначально подставлены в форму
+     * @param $onlyReturn Только вернуть сгенерированную форму в ответ?
      *
      * @return string
      */
-    protected function generateForm($id = null, $values = null)
+    protected function generateForm($id = null, $values = null, $onlyReturn = false)
     {
         if ( ! property_exists($this, '_model_name')) {
             throw new Exception("Пожалуйста, укажите название модели, с которой работает контроллер.\rПример кода: protected \$_model_name = 'App\Models\User';");
@@ -394,14 +398,13 @@ trait FormProcessLogic
         } else {
             $model = $model_name::findOrFail($id);
         }
-        $mode = is_null($model->id) ? 'add' : 'edit';
 
-        $fields = $this->getFields($mode, false);
+        $mode = is_null($model->id) ? 'add' : 'edit';
 
         $view_theme = config('prettyforms.theme', 'bootstrap3');
 
         $view            = View::make('prettyforms::save-'.$view_theme);
-        $view->fields    = $fields;
+        $view->fields    = $this->getFields($mode, false);
         $view->mode      = $mode;
         $view->strings   = $this->getStrings($model);
         $view->item      = $model;
@@ -414,12 +417,12 @@ trait FormProcessLogic
                 ? 'Создание объекта'
                 : 'Редактирование объекта');
 
-        if (method_exists($this, 'setContent')) {
+        if (method_exists($this, 'setContent') and $onlyReturn === false) {
             $this->setContent($view, $title);
         } else {
             $view->title = $title;
 
-            return $view;
+            return $view->render();
         }
     }
 
@@ -428,15 +431,14 @@ trait FormProcessLogic
      * При обычном обращении генерирует форму, которая отправляет данные на тот же URL
      * Когда приходят данные, обрабатывает их.
      *
-     * @param Request $request Объект запроса
      * @param array $values Значения, которые переопределят введённые
      */
-    protected function defaultSaveLogic(LaravelRequest $request, $values = null)
+    protected function defaultSaveLogic($values = null, $onSuccessSave = null)
     {
         if (Request::wantsJson() and Request::isMethod('post')) {
-            return $this->save($request, pf_param());
+            return $this->save(param(), $values, $onSuccessSave);
         } else {
-            return $this->generateForm(pf_param(), $values);
+            return $this->generateForm(param(), $values);
         }
     }
 
@@ -444,10 +446,10 @@ trait FormProcessLogic
      * Стандартный метод для удаления записи.
      * Работает также, как controller_save()
      */
-    protected function defaultDeleteLogic()
+    protected function defaultDeleteLogic($onSuccessDelete = null)
     {
         if (Request::wantsJson() and Request::isMethod('post')) {
-            return $this->delete(pf_param());
+            return $this->delete(param(), $onSuccessDelete);
         } else {
             abort(404);
         }
@@ -456,10 +458,10 @@ trait FormProcessLogic
     /**
      * Стандартный метод для восстановления записи, ранее удалённой мягким методом.
      */
-    protected function defaultRestoreLogic()
+    protected function defaultRestoreLogic($onSuccessRestore = null)
     {
         if (Request::wantsJson() and Request::isMethod('post')) {
-            return $this->restore(pf_param());
+            return $this->restore(param(), $onSuccessRestore);
         } else {
             abort(404);
         }
@@ -471,7 +473,7 @@ trait FormProcessLogic
     protected function defaultForceDeleteLogic()
     {
         if (Request::wantsJson() and Request::isMethod('post')) {
-            return $this->forceDelete(pf_param());
+            return $this->forceDelete(param());
         } else {
             abort(404);
         }
@@ -492,32 +494,22 @@ trait FormProcessLogic
      */
     protected function getFields($mode, $only_edited_fields = true)
     {
-        if ( ! property_exists($this, 'fields')) {
-            throw new Exception('Пожалуйста, укажите в вашем классе свойство $fields, в котором будут описаны те поля, которые должны редактироваться у объекта.'
-                ."\rПример кода: protected \$fields = [ /* список редактируемых полей */ ];");
+        if ( ! method_exists($this, 'getFormFields')) {
+            throw new Exception('Пожалуйста, укажите в вашем классе метод getFormFields, который будет возвращать те поля, которые должны редактироваться у объекта.'
+                ."\rПример кода: public function getFormFields() { return [ /* список редактируемых полей */ ]; }");
         }
 
         if ($only_edited_fields) {
-            if ($mode === 'edit' and isset($this->fields_edit)) {
-                $fields_param = 'fields_edit';
-            } else {
-                $fields_param = 'fields';
-            }
-
+            $fieldsParams = $this->getFormFields($mode);
             $fields_list = [];
-            foreach ($this->{$fields_param} as $field_key => $field_data) {
+            foreach ($fieldsParams as $field_key => $field_data) {
                 if (mb_substr($field_data['tag'], 0, 5) !== 'info-') {
                     $fields_list[$field_key] = $field_data;
                 }
             }
-
             return $fields_list;
         } else {
-            if ($mode === 'edit' and isset($this->fields_edit)) {
-                return $this->fields_edit;
-            } else {
-                return $this->fields;
-            }
+            return $this->getFormFields($mode);
         }
     }
 
@@ -528,7 +520,7 @@ trait FormProcessLogic
      */
     protected function getHomeLink($model)
     {
-        return pf_controller();
+        return controller_index();
     }
 
     /**

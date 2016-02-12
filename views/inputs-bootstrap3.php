@@ -1,5 +1,7 @@
 <?php
 
+use function PrettyFormsLaravel\get_value;
+
 // Генерация полей для добавления/редактирования записи
 $javascript = '';
 
@@ -28,7 +30,7 @@ foreach ($fields as $name => $field) {
     }
 
     if ($field['tag'] == 'hidden') {
-        echo Form::hidden($input_name, pf_get_value($name, $item, $values), $field['attributes']);
+        echo Form::hidden($input_name, get_value($name, $item, $values), $field['attributes']);
     } else {
         $field_is_required = '';
         if (isset($field['attributes']['data-validation']) and str_contains($field['attributes']['data-validation'], 'notempty')) {
